@@ -10,22 +10,28 @@ rm(list = ls())
 if (!requireNamespace("pacman", quietly = TRUE)) install.packages("pacman")
 library(pacman)
 
-
-p_load(
-  tidyverse, fredr, readxl, lubridate, foreach, gridExtra, magrittr,
-  tseries, openxlsx, ggpubr, ivreg
-)
+p_load(tidyverse, fredr, readxl, lubridate, foreach, gridExtra, magrittr,
+       tseries, openxlsx, ggpubr, ivreg)
 
 
-# Llave API
-key <- "c27bf13d09598a184acdcb2ba94aa28f"
+start <- as.Date("1997-08-31")
+end <- as.Date("2023-12-31")
+
+################################################################################
+################################################################################
+#                 API Data: FRED
+################################################################################
+################################################################################
+
+# API
+key <- "c27bf13d09598a184acdcb2ba94aa28f" #If not working, create your own at FRED
 fredr_set_key(key)
 fredr_has_key() 
 
 #Federal FUNDS
 fedfunds <- fredr_series_observations(series_id = "FEDFUNDS",
-                                      observation_start = as.Date("1997-08-31"),
-                                      observation_end = as.Date("2023-12-31"),
+                                      observation_start = start,
+                                      observation_end = end,
                                       frequency = "m",
                                       aggregation_method = "sum",
                                       units = "lin")
@@ -35,8 +41,8 @@ fedfunds <- fedfunds %>%
 
 # Spread (10 years - 3 months) / Yield Curve
 T10Y3M <- fredr_series_observations(series_id = "T10Y3M",
-                                    observation_start = as.Date("1997-08-31"),
-                                    observation_end = as.Date("2023-12-31"),
+                                    observation_start = start,
+                                    observation_end = end,
                                     frequency = "m",
                                     aggregation_method = "sum",
                                     units = "lin")
@@ -46,8 +52,8 @@ T10Y3M <- T10Y3M %>%
 
 # Monetary Base
 BOGMBASE <- fredr_series_observations(series_id = "BOGMBASE",
-                                      observation_start = as.Date("1997-08-01"),
-                                      observation_end = as.Date("2023-12-31"),
+                                      observation_start = start,
+                                      observation_end = end,
                                       frequency = "m",
                                       aggregation_method = "sum",
                                       units = "lin")
@@ -60,8 +66,8 @@ ldBOGMBASE <- BOGMBASE %>%
 
 # Retail Sales
 RSXFS <- fredr_series_observations(series_id = "RSXFS",
-                                   observation_start = as.Date("1997-08-01"),
-                                   observation_end = as.Date("2023-12-31"),
+                                   observation_start = start,
+                                   observation_end = end,
                                    frequency = "m",
                                    aggregation_method = "sum",
                                    units = "lin")
@@ -71,19 +77,10 @@ ldRSXFS <- RSXFS %>%
   mutate(ldRSXFS = 100*(lRSXFS - lag(lRSXFS))) %>%
   select(-series_id, -realtime_start, -realtime_end)
 
-
-
-# Shadow Rate
-shadow <- read_excel("WuXiaShadowRate.xlsx")
-shadow <- shadow %>%
-  rename(date = ...1) 
-
-
-
 # CPI
 cpi <- fredr_series_observations(series_id = "CPIAUCSL",
-                                 observation_start = as.Date("1997-08-01"),
-                                 observation_end = as.Date("2023-12-31"),
+                                 observation_start = start,
+                                 observation_end = end,
                                  frequency = "m",
                                  aggregation_method = "sum",
                                  units = "lin")
@@ -96,8 +93,8 @@ ldcpi <- cpi %>%
 
 # Industrial Production
 INDPROD <- fredr_series_observations(series_id = "INDPRO",
-                                     observation_start = as.Date("1997-08-01"),
-                                     observation_end = as.Date("2023-12-31"),
+                                     observation_start = start,
+                                     observation_end = end,
                                      frequency = "m",
                                      aggregation_method = "avg",
                                      units = "lin")
@@ -110,8 +107,8 @@ ldINDPROD <- INDPROD %>%
 
 # Inflation Expectations (12 months)
 EXPINF1YR <- fredr_series_observations(series_id = "EXPINF1YR",
-                                       observation_start = as.Date("1997-08-01"),
-                                       observation_end = as.Date("2023-12-31"),
+                                       observation_start = start,
+                                       observation_end = end,
                                        frequency = "m",
                                        aggregation_method = "avg",
                                        units = "lin")
@@ -121,8 +118,8 @@ EXPINF1YR <- EXPINF1YR %>%
 
 # Inflation Expectations (24 months)
 EXPINF2YR <- fredr_series_observations(series_id = "EXPINF2YR",
-                                       observation_start = as.Date("1997-08-01"),
-                                       observation_end = as.Date("2023-12-31"),
+                                       observation_start = start,
+                                       observation_end = end,
                                        frequency = "m",
                                        aggregation_method = "avg",
                                        units = "lin")
@@ -132,8 +129,8 @@ EXPINF2YR <- EXPINF2YR %>%
 
 # Treasury 10 years
 DGS10 <- fredr_series_observations(series_id = "DGS10",
-                                   observation_start = as.Date("1997-08-01"),
-                                   observation_end = as.Date("2023-12-31"),
+                                   observation_start = start,
+                                   observation_end = end,
                                    frequency = "m",
                                    aggregation_method = "avg",
                                    units = "lin")
@@ -144,8 +141,8 @@ DGS10 <- DGS10 %>%
 
 # Treasury 1 years
 DGS1 <- fredr_series_observations(series_id = "DGS1",
-                                  observation_start = as.Date("1997-08-01"),
-                                  observation_end = as.Date("2023-12-31"),
+                                  observation_start = start,
+                                  observation_end = end,
                                   frequency = "m",
                                   aggregation_method = "avg",
                                   units = "lin")
@@ -155,8 +152,8 @@ DGS1 <- DGS1 %>%
 
 # Treasury 2 years
 DGS2 <- fredr_series_observations(series_id = "DGS2",
-                                  observation_start = as.Date("1997-08-01"),
-                                  observation_end = as.Date("2023-12-31"),
+                                  observation_start = start,
+                                  observation_end = end,
                                   frequency = "m",
                                   aggregation_method = "avg",
                                   units = "lin")
@@ -166,8 +163,8 @@ DGS2 <- DGS2 %>%
 
 # Treasury 5 years
 DGS5 <- fredr_series_observations(series_id = "DGS5",
-                                  observation_start = as.Date("1997-08-01"),
-                                  observation_end = as.Date("2023-12-31"),
+                                  observation_start = start,
+                                  observation_end = end,
                                   frequency = "m",
                                   aggregation_method = "avg",
                                   units = "lin")
@@ -177,8 +174,8 @@ DGS5 <- DGS5 %>%
 
 # Treasury 30 years
 DGS30 <- fredr_series_observations(series_id = "DGS30",
-                                   observation_start = as.Date("1997-08-01"),
-                                   observation_end = as.Date("2023-12-31"),
+                                   observation_start = start,
+                                   observation_end = end,
                                    frequency = "m",
                                    aggregation_method = "avg",
                                    units = "lin")
@@ -188,8 +185,8 @@ DGS30 <- DGS30 %>%
 
 # Corporate Spread AAA
 BAA10Y <- fredr_series_observations(series_id = "BAA10Y",
-                                    observation_start = as.Date("1997-08-01"),
-                                    observation_end = as.Date("2023-12-31"),
+                                    observation_start = start,
+                                    observation_end = end,
                                     frequency = "m",
                                     aggregation_method = "avg",
                                     units = "lin")
@@ -199,8 +196,8 @@ BAA10Y <- BAA10Y %>%
 
 # Mean Fixed Rate Mortgage Rate
 MORTGAGE30US <- fredr_series_observations(series_id = "MORTGAGE30US",
-                                          observation_start = as.Date("1997-08-01"),
-                                          observation_end = as.Date("2023-12-31"),
+                                          observation_start = start,
+                                          observation_end = end,
                                           frequency = "m",
                                           aggregation_method = "avg",
                                           units = "lin")
@@ -211,8 +208,8 @@ MORTGAGE30US <- MORTGAGE30US %>%
 
 # PPI
 ppi <- fredr_series_observations(series_id = "PPIIDC",
-                                 observation_start = as.Date("1997-08-01"),
-                                 observation_end = as.Date("2023-12-31"),
+                                 observation_start = start,
+                                 observation_end = end,
                                  frequency = "m",
                                  aggregation_method = "avg",
                                  units = "lin")
@@ -225,8 +222,8 @@ ppi <- ppi %>%
 
 # Coincident Economic Activity Index
 econacti <- fredr_series_observations(series_id = "USPHCI",
-                                      observation_start = as.Date("1997-08-01"),
-                                      observation_end = as.Date("2023-12-31"),
+                                      observation_start = start,
+                                      observation_end = end,
                                       frequency = "m",
                                       aggregation_method = "avg",
                                       units = "lin")
@@ -238,8 +235,8 @@ econacti <- econacti %>%
 
 # Unemployment Rate
 UNRATE <- fredr_series_observations(series_id = "UNRATE",
-                                    observation_start = as.Date("1997-08-01"),
-                                    observation_end = as.Date("2023-12-31"),
+                                    observation_start = start,
+                                    observation_end = end,
                                     frequency = "m",
                                     aggregation_method = "avg",
                                     units = "lin")
@@ -252,8 +249,8 @@ UNRATE <- UNRATE %>%
 
 # Total Consumer Credit
 REVOLSL <- fredr_series_observations(series_id = "TOTALSL",
-                                     observation_start = as.Date("1997-08-01"),
-                                     observation_end = as.Date("2023-12-31"),
+                                     observation_start = start,
+                                     observation_end = end,
                                      frequency = "m",
                                      aggregation_method = "avg",
                                      units = "pch")
@@ -266,8 +263,8 @@ REVOLSL <- REVOLSL[-1,]
 
 # VIX
 VIX <- fredr_series_observations(series_id = "VIXCLS",
-                                 observation_start = as.Date("1997-08-01"),
-                                 observation_end = as.Date("2023-12-31"),
+                                 observation_start = start,
+                                 observation_end = end,
                                  frequency = "m",
                                  aggregation_method = "avg",
                                  units = "lin")
@@ -279,8 +276,8 @@ VIX <- VIX %>%
 
 # West Texas
 WTI <- fredr_series_observations(series_id = "DCOILWTICO",
-                                 observation_start = as.Date("1997-08-01"),
-                                 observation_end = as.Date("2023-12-31"),
+                                 observation_start = start,
+                                 observation_end = end,
                                  frequency = "m",
                                  aggregation_method = "avg",
                                  units = "lin")
@@ -292,8 +289,8 @@ WTI <- WTI %>%
 
 #EPU Index
 guncert <- fredr_series_observations(series_id = "GEPUCURRENT",
-                                     observation_start = as.Date("1997-08-01"),
-                                     observation_end = as.Date("2023-12-31"),
+                                     observation_start = start,
+                                     observation_end = end,
                                      frequency = "m",
                                      aggregation_method = "avg",
                                      units = "lin")
@@ -306,8 +303,8 @@ guncert <- guncert %>%
 
 # G7 Manufacturing
 G7 <- fredr_series_observations(series_id = "G7PRMNTO01GPSAM",
-                                observation_start = as.Date("1997-08-01"),
-                                observation_end = as.Date("2023-12-31"),
+                                observation_start = start,
+                                observation_end = end,
                                 frequency = "m",
                                 aggregation_method = "avg",
                                 units = "chg")
@@ -317,8 +314,8 @@ G7 <- G7 %>%
 
 # NFP
 PAYEMS <- fredr_series_observations(series_id = "PAYEMS",
-                                    observation_start = as.Date("1997-08-01"),
-                                    observation_end = as.Date("2023-12-31"),
+                                    observation_start = start,
+                                    observation_end = end,
                                     frequency = "m",
                                     units = "lin")
 PAYEMS<- PAYEMS %>%
@@ -327,8 +324,8 @@ PAYEMS<- PAYEMS %>%
 
 # SP500
 SP500 <- fredr_series_observations(series_id = "SP500",
-                                   observation_start = as.Date("1997-08-01"),
-                                   observation_end = as.Date("2023-12-31"),
+                                   observation_start = start,
+                                   observation_end = end,
                                    frequency = "m",
                                    units = "lin")
 SP500 <- SP500 %>%
@@ -336,6 +333,58 @@ SP500 <- SP500 %>%
   mutate(lSP500 = log(SP500)) %>%
   mutate(ldSP500 = 100*(lSP500 - lag(lSP500))) %>%
   select(-series_id, -realtime_start, -realtime_end)
+
+
+commodities <- fredr_series_observations(series_id = "PALLFNFINDEXM",
+                                         observation_start = start,
+                                         observation_end = end,
+                                         frequency = "m",
+                                         aggregation_method = "sum",
+                                         units = "lin")
+commodities <- commodities %>%
+  rename(comm = value) %>%
+  mutate(lcomm = 100*log(comm)) %>%
+  mutate(ldcomm = (lcomm - lag(lcomm))) %>%
+  select(-series_id, -realtime_start, -realtime_end)
+
+
+energy <- fredr_series_observations(series_id = "PNRGINDEXM",
+                                    observation_start = start,
+                                    observation_end = end,
+                                    frequency = "m",
+                                    aggregation_method = "sum",
+                                    units = "lin")
+energy <- energy %>%
+  rename(ener = value) %>%
+  mutate(lener = 100*log(ener)) %>%
+  mutate(ldener = (lener - lag(lener))) %>%
+  select(-series_id, -realtime_start, -realtime_end)
+
+
+
+
+################################################################################
+################################################################################
+#                 Local Data
+################################################################################
+################################################################################
+
+# Shadow Rate
+shadow <- read_excel("WuXiaShadowRate.xlsx")
+shadow <- shadow %>%
+  rename(date = ...1) 
+
+
+# GSCPI
+gscpi_data <- read_excel("gscpi_data.xls", 
+                         sheet = "Hoja1")
+gscpi_data <- gscpi_data %>%
+  rename(Period = periodo, GSCPI = GSCPI) %>%
+  mutate(Period = as.Date(Period)) 
+
+# Karadi Shocks
+karadi_shocks <- read.csv("shocks_fed_jk_m.csv")
+karadi_shocks$date <- seq(from = start, by = "month", length.out = nrow(karadi_shocks))
 
 
 
@@ -346,23 +395,15 @@ SP500 <- SP500 %>%
 #mutate(Period = as.Date(Period))
 
 
-# GSCPI
-gscpi_data <- read_excel("gscpi_data.xls", 
-                         sheet = "Hoja1")
 
 
-# Karadi Shocks
-karadi_shocks <- read.csv("shocks_fed_jk_m.csv")
-karadi_shocks$date <- seq(from = as.Date("1997-08-01"), by = "month", length.out = nrow(karadi_shocks))
 
 # View the dataset with the new date variable
 tail(karadi_shocks)
 
-gscpi_data <- gscpi_data %>%
-  rename(Period = periodo, GSCPI = GSCPI) %>%
-  mutate(Period = as.Date(Period)) 
 
-gscpi_data$Period
+
+
 
 ebp_csv <- read_csv("ebp_csv.csv")
 sp500 <- read_xlsx("sp500.xlsx")
@@ -388,30 +429,6 @@ fomc <- fomc[-1,]
 
 
 
-commodities <- fredr_series_observations(series_id = "PALLFNFINDEXM",
-                                         observation_start = as.Date("1997-08-01"),
-                                         observation_end = as.Date("2023-12-31"),
-                                         frequency = "m",
-                                         aggregation_method = "sum",
-                                         units = "lin")
-commodities <- commodities %>%
-  rename(comm = value) %>%
-  mutate(lcomm = 100*log(comm)) %>%
-  mutate(ldcomm = (lcomm - lag(lcomm))) %>%
-  select(-series_id, -realtime_start, -realtime_end)
-
-
-energy <- fredr_series_observations(series_id = "PNRGINDEXM",
-                                    observation_start = as.Date("1997-08-01"),
-                                    observation_end = as.Date("2023-12-31"),
-                                    frequency = "m",
-                                    aggregation_method = "sum",
-                                    units = "lin")
-energy <- energy %>%
-  rename(ener = value) %>%
-  mutate(lener = 100*log(ener)) %>%
-  mutate(ldener = (lener - lag(lener))) %>%
-  select(-series_id, -realtime_start, -realtime_end)
 
 
 sp <- read_excel("sp.xls", sheet = "Data")
