@@ -13,7 +13,7 @@ p <- 0.10           # Significance level
 nwlag <- h         # Newey-West lag
 
 df$x <- df$`mp_surprises$MPS_ORTH`  # Shock variable
-y <- df$lwti                 # Dependent variable
+y <- df$lcpi                 # Dependent variable
 
 
 
@@ -61,23 +61,18 @@ lag_switching_w <- TRUE  # Lag?
 fw <- trigger_w(w)     # Function
 
 
-# Run regime transformation **only if it hasn't been applied before**
-if (!any(grepl("_s1$", colnames(df)))) {  
-  message("Running regime transformation for the first time...")
+
   
-  df <- df %>%
-    mutate(across(
-      where(is.numeric),
-      list(
-        s1 = ~ . * (fw),     # High regime
-        s2 = ~ . * (1 - fw) # Low regime
-      ),
-      .names = "{.col}_{.fn}" # Add "_s1", "_s2"
-    ))
-  
-} else {
-  message("Regime transformation already applied. Skipping computation.")
-}
+df <- df %>%
+  mutate(across(
+    where(is.numeric),
+    list(
+      s1 = ~ . * (fw),     # High regime
+      s2 = ~ . * (1 - fw) # Low regime
+    ),
+    .names = "{.col}_{.fn}" # Add "_s1", "_s2"
+  ))
+
 
 
 ################################################################################
